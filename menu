@@ -1618,7 +1618,7 @@ if game.PlaceId == 155615604 then
       while wait() do
         if States.LoopKill_Guards then
           for i,v in pairs(game.Teams.Guards:GetPlayers()) do
-            if v ~= game.Players.LocalPlayer then
+            if v ~= game.Players.LocalPlayer or v.Name == Smurfen_LOL then
               pcall(function()
                 if v.Character.Humanoid.Health > 0 and v.Character.Head and v.Character and v ~= nil then
                   Kill(v)
@@ -1639,7 +1639,7 @@ if game.PlaceId == 155615604 then
       while wait() do
         if States.LoopKill_Inmates then
           for i,v in pairs(game.Teams.Inmates:GetPlayers()) do
-            if v ~= game.Players.LocalPlayer then
+            if v ~= game.Players.LocalPlayer or v.Name == Smurfen_LOL then
               pcall(function()
                 if v.Character.Humanoid.Health > 0 and v.Character.Head and v.Character and v ~= nil then
                   Kill(v)
@@ -1660,7 +1660,7 @@ if game.PlaceId == 155615604 then
       while wait() do
         if States.LoopKill_Criminals then
           for i,v in pairs(game.Teams.Criminals:GetPlayers()) do
-            if v ~= game.Players.LocalPlayer then
+            if v ~= game.Players.LocalPlayer or v.Name == Smurfen_LOL then
               pcall(function()
                 if v.Character.Humanoid.Health > 0 and v.Character.Head and v.Character and v ~= nil then
                   Kill(v)
@@ -1681,7 +1681,7 @@ if game.PlaceId == 155615604 then
       while wait() do
         if States.LoopKill_Others then
           for i,v in pairs(game.Players:GetPlayers()) do
-            if v ~= game.Players.LocalPlayer then
+            if v ~= game.Players.LocalPlayer or v.Name == Smurfen_LOL then
               pcall(function()
                 if v.Character.Humanoid.Health > 0 and v.Character.Head and v.Character and v ~= nil then
                   Kill(v)
