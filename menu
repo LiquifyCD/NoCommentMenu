@@ -618,13 +618,15 @@ if game.PlaceId == 155615604 then
       if Player.Character:FindFirstChild("ForceField") or not workspace:FindFirstChild(Player.Name) or not workspace:FindFirstChild(Player.Name):FindFirstChild("Head") or Player == nil or Player.Character.Parent ~= workspace then return end
       workspace.Remote.ItemHandler:InvokeServer(workspace.Prison_ITEMS.giver["Remington 870"].ITEMPICKUP)
 
+
+	
       local MyTeam = GetTeam()
       if Player.TeamColor.Name == game.Players.LocalPlayer.TeamColor.Name then
         local savedcf = GetPos()
         local savedcamcf = GetCamPos()
+		workspace.CurrentCamera.CFrame = savedcamcf
+		game.Players.LocalPlayer.Character.HumanoidRootPart.Position = savedcf
         workspace.Remote.loadchar:InvokeServer(nil, BrickColor.random().Name)
-        game.Players.LocalPlayer.Character.HumanoidRootPart.Position = savedcf
-        workspace.CurrentCamera.CFrame = savedcamcf
         workspace.Remote.ItemHandler:InvokeServer(workspace.Prison_ITEMS.giver["Remington 870"].ITEMPICKUP)
       end
 
@@ -675,7 +677,10 @@ if game.PlaceId == 155615604 then
       }
 
       game:GetService("ReplicatedStorage").ShootEvent:FireServer(FireEvent, Gun)
+	  print("It all worked!")
       game.Players.LocalPlayer.Character["Remington 870"]:Destroy()
+	  game.Players.LocalPlayer.Character.HumanoidRootPart.Position = savedcf
+	  print("It all worked!")
     end)
   end
 
@@ -1596,6 +1601,7 @@ if game.PlaceId == 155615604 then
       local Player = GetPlayer(Arg2)
       if Player ~= nil and not LoopKill[Player.UserId] then
         LoopKill[Player.UserId] = {Player = Player}
+		print("Successfully added the player to LoopKill List")
         Notify("Looping kills "..Player.Name, Color3.fromRGB(0, 255, 0), "Success")
       else
         Notify("No player found / already loop kills", Color3.fromRGB(255, 0, 0), "Error")
