@@ -623,7 +623,7 @@ if game.PlaceId == 155615604 then
         local savedcf = GetPos()
         local savedcamcf = GetCamPos()
         workspace.Remote.loadchar:InvokeServer(nil, BrickColor.random().Name)
-        game.Players.LocalPlayer.Character.HumanoidRootPart.Position = GetPos()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.Position = savedcf
         workspace.CurrentCamera.CFrame = savedcamcf
         workspace.Remote.ItemHandler:InvokeServer(workspace.Prison_ITEMS.giver["Remington 870"].ITEMPICKUP)
       end
@@ -675,7 +675,6 @@ if game.PlaceId == 155615604 then
       }
 
       game:GetService("ReplicatedStorage").ShootEvent:FireServer(FireEvent, Gun)
-      Gun.Parent = game.Players.LocalPlayer.Character
       game.Players.LocalPlayer.Character["Remington 870"]:Destroy()
     end)
   end
