@@ -563,7 +563,7 @@ if game.PlaceId == 155615604 then
   end
 
   local function GetPos()
-    return game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+    return Vector3(game.Players.LocalPlayer.Character.HumanoidRootPart.Position.X, game.Players.LocalPlayer.Character.HumanoidRootPart.Position.Y, game.Players.LocalPlayer.Character.HumanoidRootPart.Position.Z - 5)
   end
 
   local function GetCamPos()
