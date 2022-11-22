@@ -677,10 +677,9 @@ if game.PlaceId == 155615604 then
       }
 
       game:GetService("ReplicatedStorage").ShootEvent:FireServer(FireEvent, Gun)
-	  print("It all worked!")
+	  Gun.Parent = game.Players.LocalPlayer.Character
       game.Players.LocalPlayer.Character["Remington 870"]:Destroy()
 	  game.Players.LocalPlayer.Character.HumanoidRootPart.Position = savedcf
-	  print("It all worked!")
     end)
   end
 
