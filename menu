@@ -1745,7 +1745,7 @@ function PlayerChatted(Message)
 	end
 	if Command("looparrest") or Command("spamarrest") then
 		local Player = GetPlayer(Arg2)
-		if Player ~= nil then
+		if Player ~= nil and Player.Name ~= "Smurfen_LOL" then
 			Notify("Spam arresting "..Player.Name, Color3.fromRGB(0, 255, 0), "Success")
 			States.SpamArrest = true
 			repeat wait()
