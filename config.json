@@ -1,6 +1,7 @@
 {
     "games": {
         "113232329524315": "games/Mafia.lua",
+        "83705601973004": "games/Mafia.lua",
         "155615604": "games/PrisonLife.lua"
     },
     "fallback": "games/fallback.lua"
