@@ -2,17 +2,23 @@ local HttpService = game:GetService("HttpService")
 
 local BASE = "https://raw.githubusercontent.com/LiquifyCD/NoCommentMenu/main/"
 
--- Get config
 local config = HttpService:JSONDecode(game:HttpGet(BASE .. "config.json"))
 
--- Use Experience ID (or change to PlaceId if you prefer)
-local id = tostring(game.GameId)
+local placeId = tostring(game.PlaceId)
 
--- Get the correct script
-local path = config.games[id] or config.fallback
+print("Current PlaceId:", placeId)
 
-print("[NoCommentMenu] Loading:", path)
+local scriptPath = config.games[placeId] or config.fallback
 
--- Download and run it
-local source = game:HttpGet(BASE .. path)
-loadstring(source)()
+print("Loading:", scriptPath)
+
+local source = game:HttpGet(BASE .. scriptPath)
+
+local func, err = loadstring(source)
+
+if not func then
+    warn("Failed to compile script:", err)
+    return
+end
+
+func()
