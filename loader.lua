@@ -2,7 +2,7 @@ local HttpService = game:GetService("HttpService")
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/LiquifyCD/No-Comment-Framework/main/Framework.lua"))()
 
-local BASE = "https://raw.githubusercontent.com/LiquifyCD/NoCommentMenu/main/"
+local BASE = "https://raw.githubusercontent.com/LiquifyCD/No-Comment-Menu/main/"
 
 local config = HttpService:JSONDecode(game:HttpGet(BASE .. "config.json"))
 
