@@ -20,7 +20,7 @@ local player = Players.LocalPlayer
 player:WaitForChild("PlayerGui")
     :WaitForChild("NoCommentGui")
     :WaitForChild("Root")
-    :WaitForChild("Windows_MainMenu")
+    :WaitForChild("Window_MainMenu")
 
 print("Framework loaded, running game script...")
 
