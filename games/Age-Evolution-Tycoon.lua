@@ -138,7 +138,7 @@ local function IsButtonBuyable(button, plot)
     end
 
     local gui = button:FindFirstChild("BillboardGui", true)
-    if base.Transparency >= 1 and (!gui or gui.Enabled == false) then
+    if base.Transparency >= 1 and (not gui or gui.Enabled == false) then
         touchedButtons[button] = nil
         return false
     end
