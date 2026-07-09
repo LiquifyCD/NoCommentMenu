@@ -2,6 +2,7 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local VirtualUser = game:GetService("VirtualUser")
 local player = Players.LocalPlayer
+local Framework = shared.Framework
 
 local MainMenu = Framework.CreateWindow({
 	Id = "MainMenu",
