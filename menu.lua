@@ -36,7 +36,29 @@ if #MainMenu.Tabs == 0 then
       if not func then
             Framework.Notify({
               Title = "Error",
-              Text = "Failed initializing Remote Spy",
+              Text = "Failed to initialize Remote Spy",
+            })
+          return
+      end
+        
+		end,
+	})
+
+	externalSection:AddButton({
+		Text = "Dark Dex",
+		Callback = function()
+        
+			Framework.Notify({
+				Title = "Dark Dex",
+				Text = "Initializing Dark Dex",
+			})
+
+      local func, err = loadstring(game:HttpGet("https://raw.githubusercontent.com/LiquifyCD/No-Comment-Menu/main/scripts/DarkDexV4.lua"))()
+
+      if not func then
+            Framework.Notify({
+              Title = "Error",
+              Text = "Failed to initialize Dark Dex",
             })
           return
       end
@@ -85,7 +107,7 @@ if #MainMenu.Tabs == 0 then
 	
 	generalSection:AddToggle({
 	    Text = "Anti-AFK",
-	    Default = true,
+	    Default = false,
 	    Callback = function(value)
 	        if value then
 	            enableAntiAFK()
