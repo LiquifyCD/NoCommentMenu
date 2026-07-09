@@ -11,6 +11,10 @@ local MainMenu = Framework.CreateWindow({
 })
 
 if #MainMenu.Tabs == 0 then
+
+	local tab = win:AddTab("Home")
+local section = tab:AddSection("Main Section")
+	
   local General = win:AddTab("General")
     local Visual = win:AddTab("Visual")
     local PlayerTab = win:AddTab("Player")   -- was shadowing Visual
