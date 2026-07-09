@@ -806,7 +806,7 @@ end)
 
 
 local main =
-	UI.Windows["Demo"]
+	UI.Windows["MainMenu"]
 
 
 
@@ -816,7 +816,7 @@ if not main then
 	main =
 		UI.CreateWindow({
 
-			Id = "Demo",
+			Id = "MainMenu",
 
 			Title = "No comment"
 
