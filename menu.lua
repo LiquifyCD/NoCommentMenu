@@ -11,12 +11,16 @@ local MainMenu = Framework.CreateWindow({
 })
 
 if #MainMenu.Tabs == 0 then
-  local General = MainMenu:AddTab("General")
-  local Visual = MainMenu:AddTab("Visual")
-  local Visual = MainMenu:AddTab("Player")
-  local External = MainMenu:AddTab("External")
+  local General = win:AddTab("General")
+    local Visual = win:AddTab("Visual")
+    local PlayerTab = win:AddTab("Player")   -- was shadowing Visual
+    local External = win:AddTab("External")
 
-	External:AddButton({
+    local externalSection = External:AddSection("Scripts")
+	local generalSection = External:AddSection("Functions")
+	local playerSection = External:AddSection("Movement")
+
+	externalSection:AddButton({
 		Text = "Dark Dex V4",
 		Callback = function()
         
@@ -38,7 +42,7 @@ if #MainMenu.Tabs == 0 then
 		end,
 	})
 
-  External:AddButton({
+  externalSection:AddButton({
 		Text = "Remote Spy",
 		Callback = function()
         
@@ -99,7 +103,7 @@ if #MainMenu.Tabs == 0 then
 	    })
 	end
 	
-	General:AddToggle({
+	generalSection:AddToggle({
 	    Text = "Anti-AFK",
 	    Default = true,
 	    Callback = function(value)
@@ -112,7 +116,7 @@ if #MainMenu.Tabs == 0 then
 	})
 
 
-	Player:AddSlider({
+	playerSection:AddSlider({
 		Text = "Walkspeed",
 		Min = 0,
 		Max = 100,
