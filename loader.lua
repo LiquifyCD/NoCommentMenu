@@ -1,4 +1,5 @@
 local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/LiquifyCD/No-Comment-Framework/main/Framework.lua"))()
 
@@ -13,6 +14,15 @@ print("Current PlaceId:", placeId)
 local scriptPath = config.games[placeId] or config.fallback
 
 print("Loading:", scriptPath)
+
+-- Wait for the framework GUI to be fully created
+local player = Players.LocalPlayer
+player:WaitForChild("PlayerGui")
+    :WaitForChild("NoCommentGui")
+    :WaitForChild("Root")
+    :WaitForChild("Windows_MainMenu")
+
+print("Framework loaded, running game script...")
 
 local source = game:HttpGet(BASE .. scriptPath)
 
