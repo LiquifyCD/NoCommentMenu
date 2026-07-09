@@ -115,6 +115,8 @@ Use the `PlaceId` value when adding games to `config.json`.
 |------|--------|
 | Mafia | Supported |
 | Prison Life | Supported |
+| Kohl's Admin House | Supported |
+| Age Evolution Tycoon | Supported |
 
 More games can be added by creating new scripts and updating the configuration.
 
