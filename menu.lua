@@ -12,39 +12,15 @@ local MainMenu = Framework.CreateWindow({
 
 if #MainMenu.Tabs == 0 then
 
-	local tab = win:AddTab("Home")
-local section = tab:AddSection("Main Section")
+	local General = MainMenu:AddTab("General")
+	local Visual = MainMenu:AddTab("Visual")
+	local PlayerTab = MainMenu:AddTab("Player")
+	local External = MainMenu:AddTab("External")
 	
-  local General = win:AddTab("General")
-    local Visual = win:AddTab("Visual")
-    local PlayerTab = win:AddTab("Player")   -- was shadowing Visual
-    local External = win:AddTab("External")
-
-    local externalSection = External:AddSection("Scripts")
-	local generalSection = External:AddSection("Functions")
-	local playerSection = External:AddSection("Movement")
-
-	externalSection:AddButton({
-		Text = "Dark Dex V4",
-		Callback = function()
-        
-			Framework.Notify({
-				Title = "Dark Dex V4",
-				Text = "Initializing Explorer",
-			})
-
-      local func, err = loadstring(game:HttpGet("https://raw.githubusercontent.com/LiquifyCD/No-Comment-Menu/main/scripts/DarkDexV4.lua"))()
-
-      if not func then
-            Framework.Notify({
-              Title = "Error",
-              Text = "Failed initializing Explorer",
-            })
-          return
-      end
-        
-		end,
-	})
+	local generalSection = General:AddSection("Functions")
+	local visualSection = Visual:AddSection("Visuals")
+	local playerSection = PlayerTab:AddSection("Movement")
+	local externalSection = External:AddSection("Scripts")
 
   externalSection:AddButton({
 		Text = "Remote Spy",
