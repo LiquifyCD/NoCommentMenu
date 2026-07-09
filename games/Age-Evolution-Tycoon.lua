@@ -1,6 +1,3 @@
--- // Anti-AFK & Initialization
-loadstring(game:HttpGet("https://raw.githubusercontent.com/AsylumHUB/AsylumHUB-Anti-AFK/refs/heads/main/Main"))()
-
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
