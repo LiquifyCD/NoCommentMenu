@@ -17,32 +17,55 @@ while not UI or not UI.Ready do
 end
 
 
-
 local LocalPlayer = Players.LocalPlayer
+local player = LocalPlayer
+local camera = Workspace.CurrentCamera
 
 
 
 --==================================================
--- Lighting System
+-- LIGHTING LOCK SYSTEM
 --==================================================
 
 
 local LightingLock = false
-local Shadows = true
+local GlobalShadows = true
+local applyingLighting = false
+
+
+local lightingConnections = {}
+local atmosphereConnections = {}
+
 
 
 local function RemoveEffects()
 
-	for _,v in ipairs(Lighting:GetChildren()) do
+	for _,effect in ipairs(Lighting:GetChildren()) do
 
-		if v:IsA("ColorCorrectionEffect")
-		or v:IsA("BloomEffect")
-		or v:IsA("BlurEffect")
-		or v:IsA("SunRaysEffect") then
+		if effect:IsA("ColorCorrectionEffect")
+		or effect:IsA("BloomEffect")
+		or effect:IsA("BlurEffect")
+		or effect:IsA("SunRaysEffect") then
 
-			v:Destroy()
+			effect:Destroy()
 
 		end
+
+	end
+
+end
+
+
+
+local function FixAtmosphere()
+
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+
+	if atmosphere then
+
+		atmosphere.Density = 0
+		atmosphere.Haze = 0
+		atmosphere.Glare = 0
 
 	end
 
@@ -57,32 +80,224 @@ local function ApplyLighting()
 	end
 
 
+	if applyingLighting then
+		return
+	end
+
+
+	applyingLighting = true
+
+
 	Lighting.Brightness = 5
 	Lighting.ClockTime = 14
 	Lighting.Ambient = Color3.fromRGB(255,255,255)
 	Lighting.OutdoorAmbient = Color3.fromRGB(255,255,255)
-	Lighting.GlobalShadows = Shadows
+	Lighting.GlobalShadows = GlobalShadows
 	Lighting.FogEnd = 1000000
 	Lighting.ExposureCompensation = 0.2
 
 
+	FixAtmosphere()
 	RemoveEffects()
+
+
+	task.defer(function()
+
+		applyingLighting = false
+
+	end)
+
+end
+
+
+
+local function DisconnectLighting()
+
+	for _,connection in ipairs(lightingConnections) do
+
+		connection:Disconnect()
+
+	end
+
+
+	table.clear(lightingConnections)
+
+
+	for _,connection in ipairs(atmosphereConnections) do
+
+		connection:Disconnect()
+
+	end
+
+
+	table.clear(atmosphereConnections)
+
+end
+
+
+
+local function HookAtmosphere()
+
+	local atmosphere =
+		Lighting:FindFirstChildOfClass("Atmosphere")
+
+
+	if not atmosphere then
+		return
+	end
+
+
+
+	table.insert(
+
+		atmosphereConnections,
+
+		atmosphere:GetPropertyChangedSignal(
+			"Density"
+		):Connect(ApplyLighting)
+
+	)
+
+
+	table.insert(
+
+		atmosphereConnections,
+
+		atmosphere:GetPropertyChangedSignal(
+			"Haze"
+		):Connect(ApplyLighting)
+
+	)
+
+
+	table.insert(
+
+		atmosphereConnections,
+
+		atmosphere:GetPropertyChangedSignal(
+			"Glare"
+		):Connect(ApplyLighting)
+
+	)
 
 
 end
 
 
 
+local function EnableLightingLock()
+
+
+	if LightingLock then
+		return
+	end
+
+
+	LightingLock = true
+
+
+
+	for _,property in ipairs({
+
+		"Brightness",
+		"ClockTime",
+		"Ambient",
+		"OutdoorAmbient",
+		"GlobalShadows",
+		"FogEnd",
+		"ExposureCompensation"
+
+	}) do
+
+
+		table.insert(
+
+			lightingConnections,
+
+			Lighting:GetPropertyChangedSignal(property)
+			:Connect(ApplyLighting)
+
+		)
+
+
+	end
+
+
+
+	HookAtmosphere()
+
+
+
+	Lighting.ChildAdded:Connect(function(child)
+
+
+		if not LightingLock then
+			return
+		end
+
+
+		if child:IsA("Atmosphere") then
+
+			HookAtmosphere()
+			task.defer(ApplyLighting)
+
+
+		elseif child:IsA("ColorCorrectionEffect")
+		or child:IsA("BloomEffect")
+		or child:IsA("BlurEffect")
+		or child:IsA("SunRaysEffect") then
+
+
+			child:Destroy()
+
+			task.defer(ApplyLighting)
+
+		end
+
+
+	end)
+
+
+
+	Lighting.ChildRemoved:Connect(function()
+
+		if LightingLock then
+
+			task.defer(ApplyLighting)
+
+		end
+
+	end)
+
+
+
+	ApplyLighting()
+
+end
+
+
+
+
+local function DisableLightingLock()
+
+
+	LightingLock = false
+
+	DisconnectLighting()
+
+end
+
+
+
+
 --==================================================
--- Freecam
+-- FREECAM
 --==================================================
 
 
 local FreecamEnabled = false
 local FreecamSpeed = 5
 
-
-local camera = Workspace.CurrentCamera
 
 local cameraPart
 local freecamConnection
@@ -92,13 +307,16 @@ local yaw = 0
 local pitch = 0
 
 
+
 local movement = {
+
 	W = 0,
 	A = 0,
 	S = 0,
 	D = 0,
 	E = 0,
 	Q = 0
+
 }
 
 
@@ -111,84 +329,109 @@ local function EnableFreecam()
 	end
 
 
-	local character = LocalPlayer.Character
-	local head = character and character:FindFirstChild("Head")
+
+	local character =
+		player.Character or player.CharacterAdded:Wait()
+
+
+	local head =
+		character:FindFirstChild("Head")
+
 
 	if not head then
 		return
 	end
 
 
+
 	FreecamEnabled = true
 
 
+
 	cameraPart = Instance.new("Part")
+
 	cameraPart.Name = "NoCommentFreecam"
+
 	cameraPart.Size = Vector3.one
-	cameraPart.Transparency = 1
+
 	cameraPart.Anchored = true
+
 	cameraPart.CanCollide = false
+
+	cameraPart.Transparency = 1
+
 	cameraPart.Position = head.Position
+
 	cameraPart.Parent = Workspace
 
 
 
-	camera.CameraType = Enum.CameraType.Scriptable
+	camera.CameraType =
+		Enum.CameraType.Scriptable
 
 
 
-	local _,y,_ = camera.CFrame:ToOrientation()
+	local _,y,_ =
+		camera.CFrame:ToOrientation()
+
 
 	yaw = y
 
-	pitch = math.asin(
-		math.clamp(
-			camera.CFrame.LookVector.Y,
-			-1,
-			1
-		)
-	)
 
-
-
-	freecamConnection = RunService.RenderStepped:Connect(function()
-
-
-		if not FreecamEnabled then
-			return
-		end
-
-
-
-		local rot = CFrame.fromOrientation(
-			pitch,
-			yaw,
-			0
+	pitch =
+		math.asin(
+			math.clamp(
+				camera.CFrame.LookVector.Y,
+				-1,
+				1
+			)
 		)
 
 
 
-		local dir =
-			rot.LookVector * (movement.W - movement.S)
-			+
-			rot.RightVector * (movement.D - movement.A)
-			+
-			Vector3.yAxis * (movement.E - movement.Q)
+	freecamConnection =
+		RunService.RenderStepped:Connect(function()
+
+
+			if not FreecamEnabled then
+				return
+			end
 
 
 
-		cameraPart.Position += dir * FreecamSpeed
+			local rot =
+				CFrame.fromOrientation(
+					pitch,
+					yaw,
+					0
+				)
 
 
 
-		camera.CFrame =
-			CFrame.new(cameraPart.Position)
-			*
-			rot
+			local direction =
+				rot.LookVector *
+				(movement.W - movement.S)
+				+
+				rot.RightVector *
+				(movement.D - movement.A)
+				+
+				Vector3.yAxis *
+				(movement.E - movement.Q)
 
 
-	end)
 
+			cameraPart.Position +=
+				direction * FreecamSpeed
+
+
+
+			camera.CFrame =
+				CFrame.new(cameraPart.Position)
+				*
+				rot
+
+
+		end)
 
 end
 
@@ -203,44 +446,50 @@ local function DisableFreecam()
 	if freecamConnection then
 
 		freecamConnection:Disconnect()
+
 		freecamConnection=nil
 
 	end
 
 
+
 	if cameraPart then
 
 		cameraPart:Destroy()
+
 		cameraPart=nil
 
 	end
 
 
-	camera.CameraType = Enum.CameraType.Custom
+
+	camera.CameraType =
+		Enum.CameraType.Custom
 
 
 end
 
+--==================================================
+-- FREECAM INPUT
+--==================================================
 
 
 UserInputService.InputBegan:Connect(function(input)
-
 
 	if not FreecamEnabled then
 		return
 	end
 
 
-	local k=input.KeyCode
+	local key = input.KeyCode
 
 
-	if k==Enum.KeyCode.W then movement.W=1 end
-	if k==Enum.KeyCode.A then movement.A=1 end
-	if k==Enum.KeyCode.S then movement.S=1 end
-	if k==Enum.KeyCode.D then movement.D=1 end
-	if k==Enum.KeyCode.E then movement.E=1 end
-	if k==Enum.KeyCode.Q then movement.Q=1 end
-
+	if key == Enum.KeyCode.W then movement.W = 1 end
+	if key == Enum.KeyCode.A then movement.A = 1 end
+	if key == Enum.KeyCode.S then movement.S = 1 end
+	if key == Enum.KeyCode.D then movement.D = 1 end
+	if key == Enum.KeyCode.E then movement.E = 1 end
+	if key == Enum.KeyCode.Q then movement.Q = 1 end
 
 end)
 
@@ -249,16 +498,15 @@ end)
 UserInputService.InputEnded:Connect(function(input)
 
 
-	local k=input.KeyCode
+	local key = input.KeyCode
 
 
-	if k==Enum.KeyCode.W then movement.W=0 end
-	if k==Enum.KeyCode.A then movement.A=0 end
-	if k==Enum.KeyCode.S then movement.S=0 end
-	if k==Enum.KeyCode.D then movement.D=0 end
-	if k==Enum.KeyCode.E then movement.E=0 end
-	if k==Enum.KeyCode.Q then movement.Q=0 end
-
+	if key == Enum.KeyCode.W then movement.W = 0 end
+	if key == Enum.KeyCode.A then movement.A = 0 end
+	if key == Enum.KeyCode.S then movement.S = 0 end
+	if key == Enum.KeyCode.D then movement.D = 0 end
+	if key == Enum.KeyCode.E then movement.E = 0 end
+	if key == Enum.KeyCode.Q then movement.Q = 0 end
 
 end)
 
@@ -266,101 +514,224 @@ end)
 
 UserInputService.InputChanged:Connect(function(input)
 
+	if not FreecamEnabled then
+		return
+	end
 
-	if FreecamEnabled
-	and input.UserInputType == Enum.UserInputType.MouseMovement then
+
+	if input.UserInputType ==
+		Enum.UserInputType.MouseMovement then
 
 
 		yaw -= input.Delta.X * 0.0025
+
 		pitch -= input.Delta.Y * 0.0025
 
 
-	end
+		pitch = math.clamp(
+			pitch,
+			math.rad(-89),
+			math.rad(89)
+		)
 
+	end
 
 end)
 
 
 
+player.CharacterAdded:Connect(function()
+
+	if FreecamEnabled then
+
+		task.wait(0.2)
+
+		DisableFreecam()
+
+	end
+
+end)
+
+
+
+
 --==================================================
--- Mafia Tracker
+-- MAFIA TRACKER
 --==================================================
 
 
 local trackerWindow
 local trackerSection
-local tracked = {}
 
-local function TrackerIsAlive()
-    return trackerWindow ~= nil
-        and trackerWindow.Frame ~= nil
-        and trackerWindow.Frame.Parent ~= nil
-end
 
-local function AddTracker(name, weapon)
-    tracked[name] = weapon
-    -- Only touch the live UI if the window/section actually still exists.
-    -- If it's closed, the entry is still saved in `tracked` and will show
-    -- up next time CreateTracker() rebuilds the list.
-    if trackerSection and trackerSection.Frame and trackerSection.Frame.Parent then
-        trackerSection:AddLabel(name.." - "..weapon)
-    end
-end
-
-local function CreateTracker()
-    if TrackerIsAlive() then
-        return trackerWindow
-    end
-
-    trackerWindow = UI.CreateWindow({
-        Id = "MafiaTracker",
-        Title = "Mafia Tracker",
-        Size = UDim2.fromOffset(400, 500),
-    })
-
-    local tab = trackerWindow:AddTab("Players")
-    trackerSection = tab:AddSection("Detected Mafias")
-
-    for name, weapon in pairs(tracked) do
-        trackerSection:AddLabel(name.." - "..weapon)
-    end
-
-    return trackerWindow
-end
-
-local function OpenTracker()
-    CreateTracker() -- creates if missing/closed, reuses if still alive
-    trackerWindow.Frame.Visible = true
-end
-
-local function CloseTracker()
-    if TrackerIsAlive() then
-        trackerWindow:Close() -- destroys the Frame, clears Framework.Windows["MafiaTracker"]
-    end
-end
+local detectedCharacters = {}
 
 
 
 local weapons = {
-	Gun=true,
-	Knife=true
+
+	Gun = true,
+
+	Knife = true
+
 }
 
 
 
-local function Watch(player,character)
+local function AddTracker(characterName, weapon)
+
+
+	-- Prevent duplicates
+	if detectedCharacters[characterName] then
+
+		return
+
+	end
+
+
+
+	detectedCharacters[characterName] = weapon
+
+
+
+	if trackerSection then
+
+		trackerSection:AddLabel(
+			characterName .. " - " .. weapon
+		)
+
+	end
+
+
+
+	UI.Notify({
+
+		Title = "Mafia Detected",
+
+		Text = characterName ..
+			" has a " ..
+			weapon,
+
+		Duration = 4
+
+	})
+
+
+end
+
+
+
+local function CreateTrackerWindow()
+
+
+	if trackerWindow then
+
+		return
+
+	end
+
+
+
+	trackerWindow = UI.CreateWindow({
+
+		Id = "MafiaTracker",
+
+		Title = "Mafia Tracker",
+
+		Size = UDim2.fromOffset(
+			400,
+			500
+		)
+
+	})
+
+
+
+	local tab =
+		trackerWindow:AddTab(
+			"Players"
+		)
+
+
+
+	trackerSection =
+		tab:AddSection(
+			"Detected Mafias"
+		)
+
+
+
+	for name,weapon in pairs(detectedCharacters) do
+
+		trackerSection:AddLabel(
+			name .. " - " .. weapon
+		)
+
+	end
+
+end
+
+
+
+local function OpenTracker()
+
+
+	-- Recreate if closed/destroyed
+	if not trackerWindow
+	or not trackerWindow.Frame
+	or not trackerWindow.Frame.Parent then
+
+
+		trackerWindow = nil
+
+		trackerSection = nil
+
+
+		CreateTrackerWindow()
+
+
+	end
+
+
+
+	if trackerWindow.Frame then
+
+		trackerWindow.Frame.Visible = true
+
+	end
+
+end
+
+
+
+
+local function WatchCharacter(player, character)
+
+
+	local function CheckObject(obj)
+
+
+		if weapons[obj.Name] then
+
+
+			AddTracker(
+
+				character.Name,
+
+				obj.Name
+
+			)
+
+
+		end
+
+	end
+
 
 
 	for _,obj in ipairs(character:GetChildren()) do
 
-		if weapons[obj.Name] then
-
-			AddTracker(
-				player.Name,
-				obj.Name
-			)
-
-		end
+		CheckObject(obj)
 
 	end
 
@@ -368,14 +739,7 @@ local function Watch(player,character)
 
 	character.ChildAdded:Connect(function(obj)
 
-		if weapons[obj.Name] then
-
-			AddTracker(
-				player.Name,
-				obj.Name
-			)
-
-		end
+		CheckObject(obj)
 
 	end)
 
@@ -383,16 +747,26 @@ end
 
 
 
-local function Setup(player)
+local function SetupPlayer(player)
+
 
 	if player.Character then
-		Watch(player,player.Character)
+
+		WatchCharacter(
+			player,
+			player.Character
+		)
+
 	end
 
 
-	player.CharacterAdded:Connect(function(char)
 
-		Watch(player,char)
+	player.CharacterAdded:Connect(function(character)
+
+		WatchCharacter(
+			player,
+			character
+		)
 
 	end)
 
@@ -400,20 +774,25 @@ end
 
 
 
-for _,p in ipairs(Players:GetPlayers()) do
+for _,plr in ipairs(Players:GetPlayers()) do
 
-	if p~=LocalPlayer then
-		Setup(p)
+	if plr ~= LocalPlayer then
+
+		SetupPlayer(plr)
+
 	end
 
 end
 
 
 
-Players.PlayerAdded:Connect(function(p)
+Players.PlayerAdded:Connect(function(plr)
 
-	if p~=LocalPlayer then
-		Setup(p)
+
+	if plr ~= LocalPlayer then
+
+		SetupPlayer(plr)
+
 	end
 
 end)
@@ -422,46 +801,66 @@ end)
 
 
 --==================================================
--- UI
+-- NO COMMENT UI
 --==================================================
 
 
+local main =
+	UI.Windows["Demo"]
 
-local main = UI.Windows["MainMenu"]
 
 
 if not main then
 
-	main = UI.CreateWindow({
 
-		Id="MainMenu",
+	main =
+		UI.CreateWindow({
 
-		Title="No comment"
+			Id = "Demo",
 
-	})
+			Title = "No comment"
+
+		})
+
 
 end
 
 
 
-local tab = main:AddTab("Mafia Tools")
+local tab =
+	main:AddTab(
+		"Mafia Tools"
+	)
 
-local section = tab:AddSection("Mafia Tools")
+
+
+local section =
+	tab:AddSection(
+		"Mafia Tools"
+	)
 
 
 
 section:AddToggle({
 
-	Text="Lighting Lock",
+	Text = "Lighting Lock",
 
-	Default=false,
+	Default = false,
 
 
-	Callback=function(v)
+	Callback = function(value)
 
-		LightingLock=v
 
-		ApplyLighting()
+		if value then
+
+			EnableLightingLock()
+
+		else
+
+			DisableLightingLock()
+
+		end
+
 
 	end
 
@@ -471,16 +870,23 @@ section:AddToggle({
 
 section:AddToggle({
 
-	Text="Global Shadows",
+	Text = "Global Shadows",
 
-	Default=true,
+	Default = true,
 
 
-	Callback=function(v)
+	Callback = function(value)
 
-		Shadows=v
 
-		ApplyLighting()
+		GlobalShadows = value
+
+
+		if LightingLock then
+
+			ApplyLighting()
+
+		end
+
 
 	end
 
@@ -490,14 +896,15 @@ section:AddToggle({
 
 section:AddToggle({
 
-	Text="Freecam",
+	Text = "Freecam",
 
-	Default=false,
+	Default = false,
 
 
-	Callback=function(v)
+	Callback = function(value)
 
-		if v then
+
+		if value then
 
 			EnableFreecam()
 
@@ -507,6 +914,7 @@ section:AddToggle({
 
 		end
 
+
 	end
 
 })
@@ -515,18 +923,18 @@ section:AddToggle({
 
 section:AddSlider({
 
-	Text="Freecam Speed",
+	Text = "Freecam Speed",
 
-	Min=1,
+	Min = 1,
 
-	Max=20,
+	Max = 20,
 
-	Default=1,
+	Default = 5,
 
 
-	Callback=function(v)
+	Callback = function(value)
 
-		FreecamSpeed=v
+		FreecamSpeed = value
 
 	end
 
@@ -536,10 +944,10 @@ section:AddSlider({
 
 section:AddButton({
 
-	Text="Open Mafia Tracker",
+	Text = "Open Mafia Tracker",
 
 
-	Callback=function()
+	Callback = function()
 
 		OpenTracker()
 
@@ -551,8 +959,10 @@ section:AddButton({
 
 UI.Notify({
 
-	Title="Mafia Tools",
+	Title = "Mafia Tools",
 
-	Text="Loaded successfully."
+	Text = "Loaded successfully.",
+
+	Duration = 3
 
 })
