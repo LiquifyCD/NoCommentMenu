@@ -130,3 +130,5 @@ if #MainMenu.Tabs == 0 then
 
 
 end
+
+player.PlayerGui.NoCommentGui:SetAttribute("MenuReady", true)
