@@ -1,6 +1,7 @@
 --// Mafia Tools Plugin
 --// No-Comment Framework Extension
 
+loadstring(game:HttpGet("https://raw.githubusercontent.com/LiquifyCD/No-Comment-Menu/main/scripts/plugins/CursorDot.lua"))()
 
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
