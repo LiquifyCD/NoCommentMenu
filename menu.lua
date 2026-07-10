@@ -137,4 +137,17 @@ if #MainMenu.Tabs == 0 then
 
 end
 
+repeat task.wait() until shared.NoComment and shared.NoComment.Ready
+local Framework = shared.NoComment
+
+-- Wait for the specific window to exist (it was created with Id = "MainMenu")
+repeat task.wait() until Framework.Windows["MainMenu"]
+local MainMenu = Framework.Windows["MainMenu"]
+
+-- Uses the framework's own InputManager (same pattern it uses internally
+-- for F1 / Escape), so this plays nicely with any other binds you add later.
+Framework.InputManager.Bind("ToggleMainMenu", Enum.KeyCode.RightShift, function()
+	MainMenu.Frame.Visible = not MainMenu.Frame.Visible
+end)
+
 player.PlayerGui.NoCommentGui:SetAttribute("MenuReady", true)
