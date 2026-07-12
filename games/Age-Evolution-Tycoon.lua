@@ -178,80 +178,135 @@ local function GetButtonFromGuideEffect(plot)
     return nil
 end
 
+local ZERO_VECTOR = Vector3.zero
+local TELEPORT_OFFSET = CFrame.new(0, 1.25, 0)
+
+local function GetCharacterRoot()
+	local char = LP.Character
+	if not char then
+		return nil, nil
+	end
+
+	return char, char:FindFirstChild("HumanoidRootPart")
+end
+
 local function GetNextBuyableButton(plot)
-    local buttonsFolder = plot and plot:FindFirstChild("Buttons")
-    if not buttonsFolder then return nil end
+	local buttonsFolder = plot and plot:FindFirstChild("Buttons")
+	if not buttonsFolder then
+		return nil
+	end
 
-    local char = LP.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	local _, hrp = GetCharacterRoot()
+	local rootPosition = hrp and hrp.Position
 
-    local closestButton = nil
-    local closestDistance = math.huge
+	local closestButton
+	local closestDistanceSquared = math.huge
+	local firstBuyableButton
 
-    for _, button in ipairs(buttonsFolder:GetChildren()) do
-        if IsButtonBuyable(button, plot) then
-            local base = GetBase(button)
-            if base and hrp then
-                local distance = (hrp.Position - base.Position).Magnitude
-                if distance < closestDistance then
-                    closestDistance = distance
-                    closestButton = button
-                end
-            elseif base then
-                closestButton = button
-            end
-        end
-    end
-    return closestButton
+	for _, button in ipairs(buttonsFolder:GetChildren()) do
+		if IsButtonBuyable(button, plot) then
+			local base = GetBase(button)
+
+			if base then
+				-- Keep a fallback for when the character is unavailable.
+				firstBuyableButton = firstBuyableButton or button
+
+				if rootPosition then
+					local offset = rootPosition - base.Position
+					local distanceSquared = offset:Dot(offset)
+
+					if distanceSquared < closestDistanceSquared then
+						closestDistanceSquared = distanceSquared
+						closestButton = button
+					end
+				end
+			end
+		end
+	end
+
+	return closestButton or firstBuyableButton
 end
 
 local function CharacterIsTouchingPart(char, part)
-    if not char or not part then return false end
-    for _, touchingPart in ipairs(part:GetTouchingParts()) do
-        if touchingPart:IsDescendantOf(char) then return true end
-    end
-    return false
+	if not char or not part or not part:IsDescendantOf(workspace) then
+		return false
+	end
+
+	local touchingParts = part:GetTouchingParts()
+
+	for i = 1, #touchingParts do
+		if touchingParts[i]:IsDescendantOf(char) then
+			return true
+		end
+	end
+
+	return false
 end
 
 local function TeleportToButton(button, plot)
-    local char = LP.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not char or not hrp then
-        SetStatus("Character not ready")
-        return false
-    end
+	local char, hrp = GetCharacterRoot()
 
-    local base = GetBase(button)
-    if not base or not IsButtonBuyable(button, plot) then return false end
+	if not hrp then
+		SetStatus("Character not ready")
+		return false
+	end
 
-    local touched = false
-    local connection = base.Touched:Connect(function(hit)
-        if hit and hit:IsDescendantOf(char) then touched = true end
-    end)
+	local base = GetBase(button)
 
-    hrp.AssemblyLinearVelocity = Vector3.zero
-    hrp.AssemblyAngularVelocity = Vector3.zero
-    char:PivotTo(base.CFrame + Vector3.new(0, 1.25, 0))
+	if not base
+		or not base:IsDescendantOf(workspace)
+		or not IsButtonBuyable(button, plot)
+	then
+		return false
+	end
 
-    local startTime = os.clock()
-    repeat
-        task.wait(0.03)
-        if not _AB or not hrp.Parent then break end
-        if CharacterIsTouchingPart(char, base) or HasBoughtMarker(button) or not IsActuallyInWorkspace(base) or base.CanTouch == false then
-            touched = true
-            break
-        end
-    until touched or os.clock() - startTime > TOUCH_TIMEOUT
+	local touched = false
 
-    if connection then connection:Disconnect() end
+	local connection = base.Touched:Connect(function(hit)
+		if hit and hit:IsDescendantOf(char) then
+			touched = true
+		end
+	end)
 
-    if touched then
-        touchedButtons[button] = true
-        lastTouchedButton = button
-        SetStatus("Touched " .. button.Name)
-        return true
-    end
-    return false
+	hrp.AssemblyLinearVelocity = ZERO_VECTOR
+	hrp.AssemblyAngularVelocity = ZERO_VECTOR
+	char:PivotTo(base.CFrame * TELEPORT_OFFSET)
+
+	local deadline = os.clock() + TOUCH_TIMEOUT
+
+	while not touched and _AB and hrp.Parent and os.clock() < deadline do
+		-- These checks are cheaper than GetTouchingParts().
+		if HasBoughtMarker(button)
+			or not base:IsDescendantOf(workspace)
+			or not base.CanTouch
+		then
+			touched = true
+			break
+		end
+
+		task.wait(0.03)
+	end
+
+	-- Only perform the more expensive physics query once.
+	if not touched
+		and base.Parent
+		and base.CanTouch
+		and CharacterIsTouchingPart(char, base)
+	then
+		touched = true
+	end
+
+	connection:Disconnect()
+
+	if not touched then
+		return false
+	end
+
+	touchedButtons[button] = true
+	lastTouchedButton = button
+
+	SetStatus("Touched " .. button.Name)
+	return true
 end
 
 local function CleanTouchedCache()
