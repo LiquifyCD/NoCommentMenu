@@ -683,9 +683,18 @@ local function AddTracker(characterName, weapon)
 
 	if trackerSection then
 
-		trackerSection:AddLabel(
-			characterName .. " - " .. weapon
-		)
+		if getCurrentPhase() == "Discussion" then
+			trackerSection:AddLabel(
+				"(Vigilante) " .. characterName
+			)
+
+		else
+
+			trackerSection:AddLabel(
+				"(Mafia) " .. characterName .. " - " .. weapon
+			)
+			
+		end
 
 	end
 
@@ -693,7 +702,7 @@ local function AddTracker(characterName, weapon)
 
 	UI.Notify({
 
-		Title = "Mafia Detected",
+		Title = "Weapon Detected",
 
 		Text = characterName ..
 			" has a " ..
@@ -1050,7 +1059,7 @@ section:AddToggle({
 
 section:AddButton({
 
-	Text = "Open Mafia Tracker",
+	Text = "Open Roles Tracker",
 
 
 	Callback = function()
