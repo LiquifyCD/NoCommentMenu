@@ -6,6 +6,8 @@ local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local remote = ReplicatedStorage:WaitForChild("GameFlowLogRemote")
 
 
 local UI = shared.NoComment
@@ -20,7 +22,74 @@ local LocalPlayer = Players.LocalPlayer
 local player = LocalPlayer
 local camera = Workspace.CurrentCamera
 
+--==================================================
+-- PHASE SYSTEM
+--==================================================
 
+local validPhases = {
+	Discussion = true,
+	Voting = true,
+	Night = true,
+	Day = true,
+}
+
+local currentPhase
+
+local function getCurrentPhase()
+	return currentPhase
+end
+
+local function findPhase(value, visited)
+	if typeof(value) == "string" then
+		if validPhases[value] then
+			return value
+		end
+
+		for phase in validPhases do
+			if string.find(value, phase, 1, true) then
+				return phase
+			end
+		end
+
+		return nil
+	end
+
+	if typeof(value) ~= "table" then
+		return nil
+	end
+
+	visited = visited or {}
+
+	if visited[value] then
+		return nil
+	end
+
+	visited[value] = true
+
+	for key, nestedValue in value do
+		local phase = findPhase(key, visited)
+			or findPhase(nestedValue, visited)
+
+		if phase then
+			return phase
+		end
+	end
+
+	return nil
+end
+
+remote.OnClientEvent:Connect(function(...)
+	local arguments = table.pack(...)
+
+	for index = 1, arguments.n do
+		local phase = findPhase(arguments[index])
+
+		if phase then
+			currentPhase = phase
+			return
+		end
+	end
+end)
 
 --==================================================
 -- LIGHTING LOCK SYSTEM
@@ -652,9 +721,9 @@ local function CreateTrackerWindow()
 
 	trackerWindow = UI.CreateWindow({
 
-		Id = "MafiaTracker",
+		Id = "RolesTracker",
 
-		Title = "Mafia Tracker",
+		Title = "Roles Tracker",
 
 		Size = UDim2.fromOffset(
 			400,
@@ -674,16 +743,25 @@ local function CreateTrackerWindow()
 
 	trackerSection =
 		tab:AddSection(
-			"Detected Mafias"
+			"Detected Roles"
 		)
 
 
 
 	for name,weapon in pairs(detectedCharacters) do
 
-		trackerSection:AddLabel(
-			name .. " - " .. weapon
-		)
+		if getCurrentPhase() == "Discussion" then
+			trackerSection:AddLabel(
+				"(Vigilante) " .. name
+			)
+
+		else
+
+			trackerSection:AddLabel(
+				"(Mafia) " .. name .. " - " .. weapon
+			)
+			
+		end
 
 	end
 
