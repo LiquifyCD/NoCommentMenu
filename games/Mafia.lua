@@ -553,6 +553,25 @@ end)
 
 
 
+--==================================================
+-- Green Eyes Fake Out
+--==================================================
+
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local GreenEyesFakeOut = false
+
+local function TriggerGreenEyesFakeOut()
+	if not GreenEyesFakeOut then
+		return
+	end
+
+	-- Simulate pressing Q
+	VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Q, false, game)
+	task.wait(0.05)
+	VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
+end
+
 
 --==================================================
 -- MAFIA TRACKER
@@ -721,6 +740,8 @@ local function WatchCharacter(player, character)
 
 			)
 
+			TriggerGreenEyesFakeOut()
+
 
 		end
 
@@ -795,9 +816,6 @@ Players.PlayerAdded:Connect(function(plr)
 	end
 
 end)
-
-
-
 
 --==================================================
 -- NO COMMENT UI
@@ -937,6 +955,17 @@ section:AddSlider({
 
 	end
 
+})
+
+
+
+section:AddToggle({
+	Text = "Green Eyes Fake-Out",
+	Default = false,
+
+	Callback = function(value)
+		GreenEyesFakeOut = value
+	end
 })
 
 
