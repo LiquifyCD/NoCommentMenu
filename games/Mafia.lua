@@ -648,7 +648,7 @@ end
 --==================================================
 
 local ITEM_NAME = "saboteurBanana"
-local GROUP_DISTANCE = 4
+local GROUP_DISTANCE = 1.5
 
 local addedPlayers = {}
 
