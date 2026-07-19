@@ -642,104 +642,6 @@ local function TriggerGreenEyesFakeOut()
 end
 
 
-
---==================================================
--- SABOTEUR TRACKER
---==================================================
-
-local ITEM_NAME = "saboteurBanana"
-local GROUP_DISTANCE = 0.5
-
-local addedPlayers = {}
-local processedBananas = setmetatable({}, { __mode = "k" })
-
-local function getPosition(object)
-	if object:IsA("BasePart") then
-		return object.Position
-	elseif object:IsA("Model") then
-		return object:GetPivot().Position
-	end
-end
-
-local function detectClosestPlayer(banana)
-	if not banana:IsDescendantOf(Workspace) then
-		return
-	end
-
-	local bananaPosition = getPosition(banana)
-	if not bananaPosition then
-		return
-	end
-
-	local closest
-	local secondClosest
-
-	for _, player in ipairs(Players:GetPlayers()) do
-		local root = player.Character
-			and player.Character:FindFirstChild("HumanoidRootPart")
-
-		if root then
-			local candidate = {
-				player = player,
-				root = root,
-				distance = (root.Position - bananaPosition).Magnitude,
-			}
-
-			if not closest or candidate.distance < closest.distance then
-				secondClosest = closest
-				closest = candidate
-			elseif not secondClosest
-				or candidate.distance < secondClosest.distance
-			then
-				secondClosest = candidate
-			end
-		end
-	end
-
-	if not closest then
-		return
-	end
-
-	if secondClosest
-		and (closest.root.Position - secondClosest.root.Position).Magnitude
-			<= GROUP_DISTANCE
-	then
-		return
-	end
-
-	if addedPlayers[closest.player.UserId] then
-		return
-	end
-
-	addedPlayers[closest.player.UserId] = true
-
-	trackerSection:AddLabel(
-		"(Saboteur) " .. closest.player.Character.Name
-	)
-end
-
-local function checkObject(object)
-	if object.Name ~= ITEM_NAME
-		or processedBananas[object]
-		or not (
-			object:IsA("BasePart")
-			or object:IsA("Model")
-		)
-	then
-		return
-	end
-
-	processedBananas[object] = true
-	task.defer(detectClosestPlayer, object)
-end
-
-Workspace.ChildAdded:Connect(checkObject)
-
-local existingBanana = Workspace:FindFirstChild(ITEM_NAME)
-if existingBanana then
-	checkObject(existingBanana)
-end
-
 --==================================================
 -- MAFIA TRACKER
 --==================================================
@@ -1001,6 +903,108 @@ Players.PlayerAdded:Connect(function(plr)
 	end
 
 end)
+
+
+
+
+--==================================================
+-- SABOTEUR TRACKER
+--==================================================
+
+local ITEM_NAME = "saboteurBanana"
+local GROUP_DISTANCE = 0.5
+
+local addedPlayers = {}
+local processedBananas = setmetatable({}, { __mode = "k" })
+
+local function getPosition(object)
+	if object:IsA("BasePart") then
+		return object.Position
+	elseif object:IsA("Model") then
+		return object:GetPivot().Position
+	end
+end
+
+local function detectClosestPlayer(banana)
+	if not banana:IsDescendantOf(Workspace) then
+		return
+	end
+
+	local bananaPosition = getPosition(banana)
+	if not bananaPosition then
+		return
+	end
+
+	local closest
+	local secondClosest
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		local root = player.Character
+			and player.Character:FindFirstChild("HumanoidRootPart")
+
+		if root then
+			local candidate = {
+				player = player,
+				root = root,
+				distance = (root.Position - bananaPosition).Magnitude,
+			}
+
+			if not closest or candidate.distance < closest.distance then
+				secondClosest = closest
+				closest = candidate
+			elseif not secondClosest
+				or candidate.distance < secondClosest.distance
+			then
+				secondClosest = candidate
+			end
+		end
+	end
+
+	if not closest then
+		return
+	end
+
+	if secondClosest
+		and (closest.root.Position - secondClosest.root.Position).Magnitude
+			<= GROUP_DISTANCE
+	then
+		return
+	end
+
+	if addedPlayers[closest.player.UserId] then
+		return
+	end
+
+	addedPlayers[closest.player.UserId] = true
+
+	trackerSection:AddLabel(
+		"(Saboteur) " .. closest.player.Character.Name
+	)
+end
+
+local function checkObject(object)
+	if object.Name ~= ITEM_NAME
+		or processedBananas[object]
+		or not (
+			object:IsA("BasePart")
+			or object:IsA("Model")
+		)
+	then
+		return
+	end
+
+	processedBananas[object] = true
+	task.defer(detectClosestPlayer, object)
+end
+
+Workspace.ChildAdded:Connect(checkObject)
+
+local existingBanana = Workspace:FindFirstChild(ITEM_NAME)
+if existingBanana then
+	checkObject(existingBanana)
+end
+
+
 
 --==================================================
 -- NO COMMENT UI
