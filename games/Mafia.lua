@@ -642,6 +642,95 @@ local function TriggerGreenEyesFakeOut()
 end
 
 
+
+--==================================================
+-- SABOTEUR TRACKER
+--==================================================
+
+local ITEM_NAME = "saboteurBanana"
+local GROUP_DISTANCE = 4
+
+local addedPlayers = {}
+
+local function getPosition(object)
+	if object:IsA("BasePart") then
+		return object.Position
+	elseif object:IsA("Model") then
+		return object:GetPivot().Position
+	end
+
+	return nil
+end
+
+local function detectClosestPlayer(banana)
+	task.wait()
+
+	if not banana:IsDescendantOf(Workspace) then
+		return
+	end
+
+	local bananaPosition = getPosition(banana)
+
+	if not bananaPosition then
+		warn("saboteurBanana must be a BasePart or Model")
+		return
+	end
+
+	local candidates = {}
+
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		local root = character
+			and character:FindFirstChild("HumanoidRootPart")
+
+		if root then
+			table.insert(candidates, {
+				player = player,
+				root = root,
+				distance = (root.Position - bananaPosition).Magnitude,
+			})
+		end
+	end
+
+	table.sort(candidates, function(a, b)
+		return a.distance < b.distance
+	end)
+
+	local closest = candidates[1]
+
+	if not closest then
+		return
+	end
+
+	-- Ignore when the two closest players are within 3 studs
+	local secondClosest = candidates[2]
+
+	if secondClosest
+		and (closest.root.Position - secondClosest.root.Position).Magnitude
+			<= GROUP_DISTANCE
+	then
+		print("Ignored: multiple players are extremely close together")
+		return
+	end
+
+	-- Prevent the same player from being added twice
+	if addedPlayers[closest.player.UserId] then
+		return
+	end
+
+	addedPlayers[closest.player.UserId] = true
+
+	trackerSection:AddLabel(
+		"(Saboteur) " .. closest.player.Name
+	)
+end
+
+Workspace.DescendantAdded:Connect(function(object)
+	if object.Name == ITEM_NAME then
+		task.spawn(detectClosestPlayer, object)
+	end
+end)
+
 --==================================================
 -- MAFIA TRACKER
 --==================================================
