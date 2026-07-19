@@ -40,7 +40,7 @@ end
 
 -- Wait for GUI elements along a path (with timeout)
 local function waitForGui(...)
-    local current = player:WaitForChild("PlayerGui")
+    local current = game:GetService("CoreGui")
     for _, name in ipairs({ ... }) do
         current = current:WaitForChild(name, READY_TIMEOUT)
         if not current then
