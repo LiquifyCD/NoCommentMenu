@@ -648,9 +648,10 @@ end
 --==================================================
 
 local ITEM_NAME = "saboteurBanana"
-local GROUP_DISTANCE = 1.5
+local GROUP_DISTANCE = 0.5
 
 local addedPlayers = {}
+local processedBananas = setmetatable({}, { __mode = "k" })
 
 local function getPosition(object)
 	if object:IsA("BasePart") then
@@ -658,62 +659,54 @@ local function getPosition(object)
 	elseif object:IsA("Model") then
 		return object:GetPivot().Position
 	end
-
-	return nil
 end
 
 local function detectClosestPlayer(banana)
-	task.wait()
-
 	if not banana:IsDescendantOf(Workspace) then
 		return
 	end
 
 	local bananaPosition = getPosition(banana)
-
 	if not bananaPosition then
-		warn("saboteurBanana must be a BasePart or Model")
 		return
 	end
 
-	local candidates = {}
+	local closest
+	local secondClosest
 
-	for _, player in Players:GetPlayers() do
-		local character = player.Character
-		local root = character
-			and character:FindFirstChild("HumanoidRootPart")
+	for _, player in ipairs(Players:GetPlayers()) do
+		local root = player.Character
+			and player.Character:FindFirstChild("HumanoidRootPart")
 
 		if root then
-			table.insert(candidates, {
+			local candidate = {
 				player = player,
 				root = root,
 				distance = (root.Position - bananaPosition).Magnitude,
-			})
+			}
+
+			if not closest or candidate.distance < closest.distance then
+				secondClosest = closest
+				closest = candidate
+			elseif not secondClosest
+				or candidate.distance < secondClosest.distance
+			then
+				secondClosest = candidate
+			end
 		end
 	end
-
-	table.sort(candidates, function(a, b)
-		return a.distance < b.distance
-	end)
-
-	local closest = candidates[1]
 
 	if not closest then
 		return
 	end
 
-	-- Ignore when the two closest players are within 3 studs
-	local secondClosest = candidates[2]
-
 	if secondClosest
 		and (closest.root.Position - secondClosest.root.Position).Magnitude
 			<= GROUP_DISTANCE
 	then
-		print("Ignored: multiple players are extremely close together")
 		return
 	end
 
-	-- Prevent the same player from being added twice
 	if addedPlayers[closest.player.UserId] then
 		return
 	end
@@ -721,15 +714,31 @@ local function detectClosestPlayer(banana)
 	addedPlayers[closest.player.UserId] = true
 
 	trackerSection:AddLabel(
-		"(Saboteur) " .. closest.player.Name
+		"(Saboteur) " .. closest.player.Character.Name
 	)
 end
 
-Workspace.DescendantAdded:Connect(function(object)
-	if object.Name == ITEM_NAME then
-		task.spawn(detectClosestPlayer, object)
+local function checkObject(object)
+	if object.Name ~= ITEM_NAME
+		or processedBananas[object]
+		or not (
+			object:IsA("BasePart")
+			or object:IsA("Model")
+		)
+	then
+		return
 	end
-end)
+
+	processedBananas[object] = true
+	task.defer(detectClosestPlayer, object)
+end
+
+Workspace.ChildAdded:Connect(checkObject)
+
+local existingBanana = Workspace:FindFirstChild(ITEM_NAME)
+if existingBanana then
+	checkObject(existingBanana)
+end
 
 --==================================================
 -- MAFIA TRACKER
