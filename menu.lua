@@ -150,4 +150,4 @@ Framework.InputManager.Bind("ToggleMainMenu", Enum.KeyCode.RightShift, function(
 	MainMenu.Frame.Visible = not MainMenu.Frame.Visible
 end)
 
-player.PlayerGui.NoCommentGui:SetAttribute("MenuReady", true)
+game:GetService("CoreGui").NoCommentGui:SetAttribute("MenuReady", true)
